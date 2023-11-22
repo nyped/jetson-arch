@@ -1,0 +1,45 @@
+# Maintainer: nyped
+
+pkgname=nvidia-env
+pkgver=PKGVER
+pkgrel=1
+pkgdesc="environnement variables needed for the nvidia userspace tools"
+arch=('aarch64')
+url="none"
+license=('LGPL3')
+
+package() {
+  local target_base="$pkgdir"/etc/profile.d
+  local target="$target_base"/nvidia-env.sh
+
+  mkdir -p "$target_base"
+
+  # setting the config
+  cat > "$target" <<'EOF'
+# Adding cuda tools to the path
+append_path /usr/local/cuda-10.2/bin
+export PATH
+
+# Adding the include files to the C include path
+export C_INCLUDE_PATH=\
+/usr/local/cuda-10.2/targets/aarch64-linux/include\
+${C_INCLUDE_PATH:+:${C_INCLUDE_PATH}}
+
+# Adding the include files to the C++ include path
+export CPLUS_INCLUDE_PATH=\
+/usr/local/cuda-10.2/targets/aarch64-linux/include\
+${CPLUS_INCLUDE_PATH:+:${CPLUS_INCLUDE_PATH}}
+
+# Adding the cuda libs
+export LD_LIBRARY_PATH=\
+/usr/local/cuda-10.2/targets/aarch64-linux/lib:\
+/usr/lib/aarch64-linux-gnu:\
+/usr/lib/aarch64-linux-gnu/tegra\
+${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+EOF
+
+  # setting permissions
+  chmod 644 $target
+}
+
+# vim: set ts=2 sts=2 sw=2 ft=sh et :

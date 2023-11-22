@@ -1,0 +1,57 @@
+# Maintainer: nyped
+
+pkgname=cuda-nvgraph-dev
+pkgver=10.2.300
+pkgrel=1
+pkgdesc="TODO"
+arch=('aarch64')
+url="https://repo.download.nvidia.com"
+license=('custom')
+makedepends=('tar')
+groups=('nvidia-cuda')
+options=('!strip')
+cuda_version=10.2
+source=(
+  https://repo.download.nvidia.com/jetson/common/pool/main/c/cuda-nvgraph/cuda-nvgraph-dev-10-2_10.2.300-1_arm64.deb
+)
+sha512sums=(
+  a5ff9ab554fd8ee53f2aa2efeab2a2e04029c11451c81f52a832af47d9bee93e7e416185786e2d3b362f6cc8e0c6cf6afe0075594bc0883981be2872bbeead86
+)
+
+_mv() {
+  source="${pkgdir}/$1" dest="${pkgdir}/$2"
+
+  if [[ -d "$source" ]] # $1 is a dir
+  then
+    # moving everything
+    rmdir "$source" 2>/dev/null || {
+      mkdir -p "$dest"
+      mv "$source"/* "$dest"
+      rmdir "$source"
+    }
+  elif [[ -f "$source" ]] # $1 is a file
+  then
+    # moving the file
+    mv "$source" "$dest"
+  fi
+}
+
+package() {
+  # Unpack the deb file
+  tar xf data.tar.* --keep-directory-symlink -C "${pkgdir}"
+
+  # Restore symlinks
+  _mv /lib /usr/lib
+  _mv /usr/sbin /usr/bin
+
+  # Install licenses properly
+  _mv /usr/share/doc /usr/share/licenses/$pkgname
+
+  # Setup permission
+  find "$pkgdir" \( -name \*.so -o -name \*.so.\* -o -name \*.bin -o -name \*.fw \) -exec chmod 755 '{}' ';'
+
+  # Remove useless links
+  rm -f "$pkgdir"/usr/local/cuda-${cuda_version}/{include,lib64}
+}
+
+# vim: set ts=2 sts=2 sw=2 ft=sh et :

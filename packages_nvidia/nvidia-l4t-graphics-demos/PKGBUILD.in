@@ -1,0 +1,53 @@
+# Maintainer: nyped
+
+pkgname=nvidia-l4t-graphics-demos
+pkgver=PKGVER
+pkgrel=1
+pkgdesc="TODO"
+arch=('aarch64')
+url="https://repo.download.nvidia.com"
+license=('custom')
+makedepends=('tar')
+options=('!strip')
+source=(
+  PKGURL
+)
+sha512sums=(
+  PKGSHA
+)
+
+_mv() {
+  source="${pkgdir}/$1" dest="${pkgdir}/$2"
+
+  if [[ -d "$source" ]] # $1 is a dir
+  then
+    # moving everything
+    rmdir "$source" 2>/dev/null || {
+      mkdir -p "$dest"
+      mv "$source"/* "$dest"
+      rmdir "$source"
+    }
+  elif [[ -f "$source" ]] # $1 is a file
+  then
+    # moving the file
+    mv "$source" "$dest"
+  fi
+}
+
+package() {
+  # Unpack the deb file
+  tar xf data.tar.* --keep-directory-symlink -C "${pkgdir}"
+
+  # Restore symlinks
+  _mv /lib /usr/lib
+  _mv /usr/sbin /usr/bin
+
+  # Install licenses properly
+  _mv /usr/share/doc/$pkgname /usr/share/licenses/$pkgname
+  _mv /usr/share/doc/nvidia-tegra /usr/share/licenses/$pkgname
+
+  # Setup permission
+  find "$pkgdir" \( -name \*.so -o -name \*.so.\* -o -name \*.bin -o -name \*.fw \) -exec chmod 755 '{}' ';'
+}
+
+# vim: set ts=2 sts=2 sw=2 ft=sh et :

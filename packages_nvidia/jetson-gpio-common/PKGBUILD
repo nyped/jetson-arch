@@ -1,0 +1,53 @@
+# Maintainer: nyped
+
+pkgname=jetson-gpio-common
+pkgver=2.0.17
+pkgrel=1
+pkgdesc="TODO"
+arch=('aarch64')
+url="https://repo.download.nvidia.com"
+license=('custom')
+makedepends=('tar')
+options=('!strip')
+source=(
+  https://repo.download.nvidia.com/jetson/t210/pool/main/j/jetson-gpio/jetson-gpio-common_2.0.17_arm64.deb
+)
+sha512sums=(
+  a4337af869e314140b94d8140150d790bd126a0c52ab78261a2f88301693e5900aa69b030cfe1a2845e2215ca7ca0f67d426b43a573a2ca07d1e7cd3a2371ee2
+)
+
+_mv() {
+  source="${pkgdir}/$1" dest="${pkgdir}/$2"
+
+  if [[ -d "$source" ]] # $1 is a dir
+  then
+    # moving everything
+    rmdir "$source" 2>/dev/null || {
+      mkdir -p "$dest"
+      mv "$source"/* "$dest"
+      rmdir "$source"
+    }
+  elif [[ -f "$source" ]] # $1 is a file
+  then
+    # moving the file
+    mv "$source" "$dest"
+  fi
+}
+
+package() {
+  # Unpack the deb file
+  tar xf data.tar.* --keep-directory-symlink -C "${pkgdir}"
+
+  # Restore symlinks
+  _mv /lib /usr/lib
+  _mv /usr/sbin /usr/bin
+
+  # Install licenses properly
+  _mv /usr/share/doc/$pkgname /usr/share/licenses/$pkgname
+  _mv /usr/share/doc/nvidia-tegra /usr/share/licenses/$pkgname
+
+  # Setup permission
+  find "$pkgdir" \( -name \*.so -o -name \*.so.\* -o -name \*.bin -o -name \*.fw \) -exec chmod 755 '{}' ';'
+}
+
+# vim: set ts=2 sts=2 sw=2 ft=sh et :

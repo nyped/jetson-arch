@@ -1,0 +1,57 @@
+# Maintainer: nyped
+
+pkgname=cuda-cudart
+pkgver=10.2.300
+pkgrel=1
+pkgdesc="TODO"
+arch=('aarch64')
+url="https://repo.download.nvidia.com"
+license=('custom')
+makedepends=('tar')
+groups=('nvidia-cuda')
+options=('!strip')
+cuda_version=10.2
+source=(
+  https://repo.download.nvidia.com/jetson/common/pool/main/c/cuda-cudart/cuda-cudart-10-2_10.2.300-1_arm64.deb
+)
+sha512sums=(
+  e24d527d9ac5e14adf55532168de002e612224e954d25cf23eca00a7c842eafa4b3ee3712346d78a5546f5145c01b261017f4d3eccb02940849fde0f4b379ae4
+)
+
+_mv() {
+  source="${pkgdir}/$1" dest="${pkgdir}/$2"
+
+  if [[ -d "$source" ]] # $1 is a dir
+  then
+    # moving everything
+    rmdir "$source" 2>/dev/null || {
+      mkdir -p "$dest"
+      mv "$source"/* "$dest"
+      rmdir "$source"
+    }
+  elif [[ -f "$source" ]] # $1 is a file
+  then
+    # moving the file
+    mv "$source" "$dest"
+  fi
+}
+
+package() {
+  # Unpack the deb file
+  tar xf data.tar.* --keep-directory-symlink -C "${pkgdir}"
+
+  # Restore symlinks
+  _mv /lib /usr/lib
+  _mv /usr/sbin /usr/bin
+
+  # Install licenses properly
+  _mv /usr/share/doc /usr/share/licenses/$pkgname
+
+  # Setup permission
+  find "$pkgdir" \( -name \*.so -o -name \*.so.\* -o -name \*.bin -o -name \*.fw \) -exec chmod 755 '{}' ';'
+
+  # Remove useless links
+  rm -f "$pkgdir"/usr/local/cuda-${cuda_version}/{include,lib64}
+}
+
+# vim: set ts=2 sts=2 sw=2 ft=sh et :

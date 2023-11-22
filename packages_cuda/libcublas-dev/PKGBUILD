@@ -1,0 +1,57 @@
+# Maintainer: nyped
+
+pkgname=libcublas-dev
+pkgver=10.2.3.300
+pkgrel=1
+pkgdesc="TODO"
+arch=('aarch64')
+url="https://repo.download.nvidia.com"
+license=('custom')
+makedepends=('tar')
+groups=('nvidia-cuda')
+options=('!strip')
+cuda_version=10.2
+source=(
+  https://repo.download.nvidia.com/jetson/common/pool/main/libc/libcublas/libcublas-dev_10.2.3.300-1_arm64.deb
+)
+sha512sums=(
+  3e098222a7bd7901fb46c2362aab46b0eda81eaa725a09ea6bf44e295acb4261258ae1336324517e0fef1c5140bcbe16dae86e49169114c385bb1d22e0125864
+)
+
+_mv() {
+  source="${pkgdir}/$1" dest="${pkgdir}/$2"
+
+  if [[ -d "$source" ]] # $1 is a dir
+  then
+    # moving everything
+    rmdir "$source" 2>/dev/null || {
+      mkdir -p "$dest"
+      mv "$source"/* "$dest"
+      rmdir "$source"
+    }
+  elif [[ -f "$source" ]] # $1 is a file
+  then
+    # moving the file
+    mv "$source" "$dest"
+  fi
+}
+
+package() {
+  # Unpack the deb file
+  tar xf data.tar.* --keep-directory-symlink -C "${pkgdir}"
+
+  # Restore symlinks
+  _mv /lib /usr/lib
+  _mv /usr/sbin /usr/bin
+
+  # Install licenses properly
+  _mv /usr/share/doc /usr/share/licenses/$pkgname
+
+  # Setup permission
+  find "$pkgdir" \( -name \*.so -o -name \*.so.\* -o -name \*.bin -o -name \*.fw \) -exec chmod 755 '{}' ';'
+
+  # Remove useless links
+  rm -f "$pkgdir"/usr/local/cuda-${cuda_version}/{include,lib64}
+}
+
+# vim: set ts=2 sts=2 sw=2 ft=sh et :

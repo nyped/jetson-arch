@@ -1,0 +1,54 @@
+# Maintainer: nyped
+
+pkgname=nvidia-l4t-kernel-headers
+pkgver=4.9.337.tegra.32.7.4.20230608212426
+pkgrel=1
+pkgdesc="TODO"
+arch=('aarch64')
+url="https://repo.download.nvidia.com"
+license=('custom')
+depends=('nvidia-l4t-core' 'nvidia-l4t-kernel' 'glibc' 'openssl')
+makedepends=('tar')
+options=('!strip')
+source=(
+  https://repo.download.nvidia.com/jetson/t210/pool/main/n/nvidia-l4t-kernel-headers/nvidia-l4t-kernel-headers_4.9.337-tegra-32.7.4-20230608212426_arm64.deb
+)
+sha512sums=(
+  eed9c7ec0aeb9dca44a01ebf3bf0a9a720bd767f4f74edaee60ed8bb917ea083d56defda6b68af9e8f62ca162609aec04f0daee8b96864d5e81b928e0c052bd7
+)
+
+_mv() {
+  source="${pkgdir}/$1" dest="${pkgdir}/$2"
+
+  if [[ -d "$source" ]] # $1 is a dir
+  then
+    # moving everything
+    rmdir "$source" 2>/dev/null || {
+      mkdir -p "$dest"
+      mv "$source"/* "$dest"
+      rmdir "$source"
+    }
+  elif [[ -f "$source" ]] # $1 is a file
+  then
+    # moving the file
+    mv "$source" "$dest"
+  fi
+}
+
+package() {
+  # Unpack the deb file
+  tar xf data.tar.* --keep-directory-symlink -C "${pkgdir}"
+
+  # Restore symlinks
+  _mv /lib /usr/lib
+  _mv /usr/sbin /usr/bin
+
+  # Install licenses properly
+  _mv /usr/share/doc/$pkgname /usr/share/licenses/$pkgname
+  _mv /usr/share/doc/nvidia-tegra /usr/share/licenses/$pkgname
+
+  # Setup permission
+  find "$pkgdir" \( -name \*.so -o -name \*.so.\* -o -name \*.bin -o -name \*.fw \) -exec chmod 755 '{}' ';'
+}
+
+# vim: set ts=2 sts=2 sw=2 ft=sh et :

@@ -1,0 +1,53 @@
+# Maintainer: nyped
+
+pkgname=nvidia-l4t-core
+pkgver=32.7.4.20230608212426
+pkgrel=1
+pkgdesc="TODO"
+arch=('aarch64')
+url="https://repo.download.nvidia.com"
+license=('custom')
+makedepends=('tar')
+options=('!strip')
+source=(
+  https://repo.download.nvidia.com/jetson/t210/pool/main/n/nvidia-l4t-core/nvidia-l4t-core_32.7.4-20230608212426_arm64.deb
+)
+sha512sums=(
+  e3a42ffc0ca48134dccbe5bb3af5e4fcbc35a1d605b8e35ace105ffd10938fb3f72d602ff1a42b6d84e69e68e44e253ee4ad07e8071fd315b3f1465aa4bda8be
+)
+
+_mv() {
+  source="${pkgdir}/$1" dest="${pkgdir}/$2"
+
+  if [[ -d "$source" ]] # $1 is a dir
+  then
+    # moving everything
+    rmdir "$source" 2>/dev/null || {
+      mkdir -p "$dest"
+      mv "$source"/* "$dest"
+      rmdir "$source"
+    }
+  elif [[ -f "$source" ]] # $1 is a file
+  then
+    # moving the file
+    mv "$source" "$dest"
+  fi
+}
+
+package() {
+  # Unpack the deb file
+  tar xf data.tar.* --keep-directory-symlink -C "${pkgdir}"
+
+  # Restore symlinks
+  _mv /lib /usr/lib
+  _mv /usr/sbin /usr/bin
+
+  # Install licenses properly
+  _mv /usr/share/doc/$pkgname /usr/share/licenses/$pkgname
+  _mv /usr/share/doc/nvidia-tegra /usr/share/licenses/$pkgname
+
+  # Setup permission
+  find "$pkgdir" \( -name \*.so -o -name \*.so.\* -o -name \*.bin -o -name \*.fw \) -exec chmod 755 '{}' ';'
+}
+
+# vim: set ts=2 sts=2 sw=2 ft=sh et :
